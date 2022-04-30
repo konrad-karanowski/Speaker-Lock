@@ -1,5 +1,6 @@
 from typing import *
 from dataclasses import dataclass, asdict
+import wave
 
 import pyaudio
 import numpy as np
@@ -15,16 +16,14 @@ class StreamParams:
     output: bool = False
 
 
-
 class Recorder:
 
     def __init__(self) -> None:
-        self.stream_params = StreamParams()
-        self.stream = None
-        self.pyaudio = None
+        self.stream_params: StreamParams = StreamParams()
+        self.stream: Optional[pyaudio.Stream] = None
+        self.pyaudio: Optional[pyaudio.PyAudio] = None
 
-
-    def record_audio(self, duration: int) -> np.ndarray:
+    def record_audio(self, duration: int, save: Optional[str] = None) -> np.ndarray:
         frames = []
         self.pyaudio = pyaudio.PyAudio()
         self.stream = self.pyaudio.open(**asdict(self.stream_params))
@@ -38,9 +37,15 @@ class Recorder:
             self.stream.close()
             self.pyaudio.terminate()
         sound = np.hstack(frames)
+        if save is not None:
+            with wave.open(save, 'w') as obj:
+                obj.setnchannels(1)
+                obj.setframerate(22050)
+                obj.setsampwidth(2)
+                obj.writeframes(sound)
         return sound
 
 
 if __name__ == '__main__':
     recorder = Recorder()
-    recorder.record_audio(duration=5)
+    recorder.record_audio(duration=5, save='support_set/Hurtownie.wav')

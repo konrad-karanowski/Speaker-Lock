@@ -12,14 +12,13 @@ from algorithm import Algorithm
 
 
 class MainFrame(tk.Frame):
-
     audio: Optional[np.ndarray] = None
+    audio_sr: Optional[int] = 22050
     latence: int = 3
-    recording_duration: int = 3
+    recording_duration: int = 2
     recorder = Recorder()
-    algorithm = Algorithm()
-    support_set: Optional[pd.DataFrame] = None
-    
+    algorithm = Algorithm('support_set/Hurtownie.wav', 22050, 22050, 11050, 13, 8)
+
     def __init__(self, container, **kwargs) -> None:
         super(MainFrame, self).__init__(container, **kwargs)
 
@@ -28,24 +27,24 @@ class MainFrame(tk.Frame):
         self.record_button.grid(row=0, column=0)
 
         self.play_button = tk.Button(
-            self, 
-            text='Play', 
-            command=self.play_audio, 
-            height=1, 
-            width=7, 
+            self,
+            text='Play',
+            command=self.play_audio,
+            height=1,
+            width=7,
             state=tk.DISABLED
         )
         self.play_button.grid(row=0, column=1)
 
         self.unlock_button = tk.Button(
-            self, 
-            text='Unlock', 
-            command=self.unlock, 
-            height=1, width=7, 
+            self,
+            text='Unlock',
+            command=self.unlock,
+            height=1, width=7,
             state=tk.DISABLED
         )
         self.unlock_button.grid(row=0, column=2)
-        
+
         self.message_label = tk.Label(self)
         self.message_label.grid(row=1, column=0, columnspan=3)
 
@@ -53,7 +52,6 @@ class MainFrame(tk.Frame):
         self.image_label = tk.Label(self, image=self.image)
         self.image_label.grid(row=2, column=0, columnspan=3, rowspan=3)
 
-        
     def record_audio(self) -> None:
         for i in range(self.latence, 0, -1):
             self.record_button['text'] = str(i)
@@ -61,23 +59,23 @@ class MainFrame(tk.Frame):
             self.after(1000)
         self.record_button['text'] = 'Recording...'
         self.update()
-        
+
         self.audio = self.recorder.record_audio(self.recording_duration)
 
         if self.audio is not None:
             self.play_button['state'] = tk.ACTIVE
-            if self.support_set is not None:
-                self.unlock_button['state'] = tk.ACTIVE
+            self.unlock_button['state'] = tk.ACTIVE
         self.record_button['text'] = 'Record'
         self.update()
 
     def play_audio(self) -> None:
         if self.audio is not None:
-            sd.play(self.audio, 22050)
+            sd.play(self.audio, self.audio_sr)
 
     def unlock(self) -> None:
-        if self.support_set is not None and self.audio is not None:
-            result = self.algorithm.try_unlock(self.support_set)
+        if self.audio is not None:
+            result = self.algorithm.try_unlock(self.audio, self.audio_sr)
+            print(result)
             if result['label_pred'] and result['speaker_pred']:
                 verdict = 'Granted'
                 self.grant_permission(result)
@@ -105,4 +103,4 @@ class MainFrame(tk.Frame):
         self.message_label['text'] = f'Permission denied.{msg}'
         self.image = ImageTk.PhotoImage(file='img/lock.png')
         self.image_label['image'] = self.image
-        self.image_label['bg'] = 'lightred'
+        self.image_label['bg'] = 'red'
