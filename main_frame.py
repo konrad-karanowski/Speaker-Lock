@@ -17,7 +17,7 @@ class MainFrame(tk.Frame):
     latence: int = 3
     recording_duration: int = 2
     recorder = Recorder()
-    algorithm = Algorithm('support_set/Hurtownie.wav', 22050, 22050, 11050, 13, 8)
+    algorithm = Algorithm(22050, 22050, 11050, 0.5, 0.5)
 
     def __init__(self, container, **kwargs) -> None:
         super(MainFrame, self).__init__(container, **kwargs)
