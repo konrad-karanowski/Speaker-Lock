@@ -4,8 +4,7 @@ from tkinter import messagebox
 import sounddevice as sd
 
 import numpy as np
-import pandas as pd
-from PIL import Image, ImageTk
+from PIL import ImageTk
 
 from recorder import Recorder
 from algorithm import Algorithm
@@ -15,11 +14,15 @@ class MainFrame(tk.Frame):
     audio: Optional[np.ndarray] = None
     audio_sr: Optional[int] = 22050
     latence: int = 3
-    recording_duration: int = 2
+    recording_duration: int = 1
     recorder = Recorder()
-    algorithm = Algorithm(22050, 22050, 11050, 0.5, 0.5)
+    algorithm = Algorithm(22050, 22050, label_threshold=0.3, speaker_threshold=0.85)
 
-    def __init__(self, container, **kwargs) -> None:
+    def __init__(self, container: tk.Misc, **kwargs) -> None:
+        """Main frame of the application.
+        Args:
+            container (Misc): Main tkinter Misc.
+        """
         super(MainFrame, self).__init__(container, **kwargs)
 
         # widgets 
@@ -53,10 +56,12 @@ class MainFrame(tk.Frame):
         self.image_label.grid(row=2, column=0, columnspan=3, rowspan=3)
 
     def record_audio(self) -> None:
+        """Records the audio.
+        """
         for i in range(self.latence, 0, -1):
             self.record_button['text'] = str(i)
             self.update()
-            self.after(1000)
+            self.after(300)
         self.record_button['text'] = 'Recording...'
         self.update()
 
@@ -69,32 +74,41 @@ class MainFrame(tk.Frame):
         self.update()
 
     def play_audio(self) -> None:
+        """Plays the audio if there is a such.
+        """
         if self.audio is not None:
             sd.play(self.audio, self.audio_sr)
 
     def unlock(self) -> None:
+        """Tries to unlock the system.
+        """
         if self.audio is not None:
             result = self.algorithm.try_unlock(self.audio, self.audio_sr)
             print(result)
             if result['label_pred'] and result['speaker_pred']:
                 verdict = 'Granted'
-                self.grant_permission(result)
+                self.grant_permission()
             else:
                 verdict = 'Denied'
                 self.deny_permission(result)
-            messagebox.showinfo(f'''
-            {verdict} permission to system. 
-            Distance between audio and speaker: {result["speaker_distance"]}
-            Distance between audio and word: {result["label_distance"]}
+            messagebox.showinfo(title=f'{verdict} permission to system.', message=f''' 
+            Probability that you are the speaker: {result["speaker_proba"]}
+            Probability thet the word is the password: {result["label_proba"]}
             ''')
 
-    def grant_permission(self, result: Dict[str, float]) -> None:
+    def grant_permission(self) -> None:
+        """Grants permission to the system.
+        """
         self.message_label['text'] = 'Welcome back, Konrad!'
         self.image = ImageTk.PhotoImage(file='img/unlock.png')
         self.image_label['image'] = self.image
         self.image_label['bg'] = 'lightgreen'
 
     def deny_permission(self, result: Dict[str, float]) -> None:
+        """Deny permission to the system and show the message.
+        Args:
+            result (Dict[str, float]): Results of predictions from the model.
+        """
         msg = ''
         if not result['label_pred']:
             msg += ' This is not correct password.'

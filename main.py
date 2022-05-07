@@ -2,6 +2,7 @@ from app import Application
 
 
 def main() -> None:
+    
     app = Application()
     app.mainloop()
 

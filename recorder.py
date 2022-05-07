@@ -19,6 +19,9 @@ class StreamParams:
 class Recorder:
 
     def __init__(self) -> None:
+        """
+        Audio recorder taken from: https://www.youtube.com/watch?v=e9CRZEi_feA
+        """
         self.stream_params: StreamParams = StreamParams()
         self.stream: Optional[pyaudio.Stream] = None
         self.pyaudio: Optional[pyaudio.PyAudio] = None
@@ -44,8 +47,3 @@ class Recorder:
                 obj.setsampwidth(2)
                 obj.writeframes(sound)
         return sound
-
-
-if __name__ == '__main__':
-    recorder = Recorder()
-    recorder.record_audio(duration=5, save='support_set/Hurtownie.wav')
